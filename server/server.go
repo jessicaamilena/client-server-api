@@ -4,8 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type CotacaoApiResponse struct {
@@ -23,21 +26,36 @@ func main() {
 	}
 	defer db.Close()
 
-	http.HandleFunc("/cotacao", cotacaoHandler)
-	http.ListenAndServe(":8080", nil)
+	err = initDatabase(db)
+	if err != nil {
+		panic(err)
+	}
+
+	http.HandleFunc("/cotacao", func(w http.ResponseWriter, r *http.Request) {
+		cotacaoHandler(w, r, db)
+	})
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal("Error starting server:", err)
+	}
 }
 
-func cotacaoHandler(w http.ResponseWriter, r *http.Request) {
+func initDatabase(db *sql.DB) error {
+	createCotacoesTable := `create table if not exists cotacoes (id integer primary key autoincrement, bid varchar, created_at datetime default current_timestamp);`
+	_, err := db.Exec(createCotacoesTable)
+	return err
+}
+
+func cotacaoHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.URL.Path != "/cotacao" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 200*time.Millisecond)
-	defer cancel()
+	ApiCtx, cancelApiCall := context.WithTimeout(r.Context(), 200*time.Millisecond)
+	defer cancelApiCall()
 
 	url := "https://economia.awesomeapi.com.br/json/last/USD-BRL"
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ApiCtx, http.MethodGet, url, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -54,9 +72,26 @@ func cotacaoHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	// bid := cotacaoResponse.USDBRL.Bid
+	bid := cotacaoResponse.USDBRL.Bid
+	dbCtx, cancelDbReq := context.WithTimeout(r.Context(), 10*time.Millisecond)
+	defer cancelDbReq()
 
-	// dbCtx, cancelDbReq := context.WithTimeout(r.Context(), 10*time.Millisecond)
-	// defer cancelDbReq()
+	if err := insertCotacao(dbCtx, db, bid); err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	response := map[string]string{"bid": bid}
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func insertCotacao(dbCtx context.Context, db *sql.DB, bid string) error {
+	_, err := db.ExecContext(dbCtx, "insert into cotacoes (bid) values (?)", bid)
+	return err
 }

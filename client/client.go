@@ -35,13 +35,13 @@ func main() {
 		panic(err)
 	}
 
-	f, err := os.Create("cotacao.txt")
+	file, err := os.Create("cotacao.txt")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating archive: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error writing file: %v\n", err)
 	}
-	defer f.Close()
+	defer file.Close()
 
-	if _, err = f.WriteString(fmt.Sprintf("Dollar: %s\n", cotacao.Bid)); err != nil {
+	if _, err = file.WriteString(fmt.Sprintf("Dollar: %s\n", cotacao.Bid)); err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing file: %v\n", err)
 	}
 
