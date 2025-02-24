@@ -8,13 +8,15 @@ Build an API that enables client-server communication efficiently, securely, and
 
 ## 🔨 How to Run
 
- ### 1. In Terminal #1: Start the server:
+ ### 1. In Terminal #1: 
+ **Start the server:**
  `go run server.go`
 
  If everything’s peachy, you’ll see... 
  well, you`ll see.
 
- ### 2. In Terminal #2: Run the client:
+ ### 2. In Terminal #2: 
+ **Run the client:**
  `go run client.go`
 
  And check the file **_cotacao.txt_** to see the current dollar rate. 💰
