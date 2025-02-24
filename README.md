@@ -4,7 +4,7 @@ Hi!! I`m Jessica... or sometimes Milena!
 Welcome to this repository, where Go, context with timeouts and SQLite come together to create something cool! 😎
 
 ## 🎯 The Challenge
-Build an API that enables client-server communication efficiently, securely, and – most importantly – without losing your sanity or breaking everything in the process (fingers crossed! 🤞).
+You need to deliver two Go programs — client.go and server.go — that communicate to get the current dollar exchange rate and – most importantly – without losing your sanity or breaking everything in the process (fingers crossed! 🤞).
 
 ## 🔨 How to Run
 
